@@ -3,14 +3,14 @@ int redRowList[8] = {22, 24, 26, 28, 30, 32, 34, 36};
 int grnRowList[8] = {23, 25, 27, 29, 31, 33, 35, 37};
 
 int printable[8][8] = {
-    {1,1,1,1,1,1,1,1},
+    {0,1,1,1,1,1,1,0},
     {1,1,1,1,1,1,1,1},
     {1,1,0,1,1,0,1,1},
     {1,1,0,1,1,0,1,1},
     {1,1,1,1,1,1,1,1},
     {1,0,1,1,1,1,0,1},
     {1,1,0,0,0,0,1,1},
-    {1,1,1,1,1,1,1,1}
+    {0,1,1,1,1,1,1,0}
     };
 
 void setup() {
@@ -54,13 +54,10 @@ void PrintToScreen (int printMatrix[8][8]) {
                 digitalWrite(columnList[j], HIGH);
             }
             else {
-                digitalWrite(redRowList[i], HIGH);
-                digitalWrite(grnRowList[i], HIGH);
                 digitalWrite(columnList[j], LOW);                
             }
             //Wherever a HIGH row and a LOW column meet is where the light will light up
 //            digitalWrite(columnList[j], LOW);
-
           
         }
         delay(100/30);
