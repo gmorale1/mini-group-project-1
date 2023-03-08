@@ -43,6 +43,11 @@ void setup() {
   calibrate();
 
   pinMode(button, INPUT);
+
+  x_pos = 4;
+  y_pos = 4;
+  x_int_pos = 4;
+  y_int_pos = 4;
 }
 
 void loop() {
