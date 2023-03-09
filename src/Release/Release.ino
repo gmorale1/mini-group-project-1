@@ -60,7 +60,7 @@ int dead[8][8] = {
     };
 
 //pins
-int button = 10;
+int button = 10, speaker = 11;
 //end print screen variables
 
 //Object used to manage the asteroids position and direction
@@ -295,6 +295,7 @@ void loop(){
         float imu[3];
         getIMUData(imu);
         movePlayer(imu);
+        //tone(speaker,1000*((x_speed * x_speed) + (y_speed*y_speed)));
 
         //printMatrix may give enough delays that imu will be ready
         //delay(30);
@@ -313,19 +314,24 @@ void loop(){
       playerOne.y[4] = x_int_pos + 1; //right
       playerOne.x[4] = y_int_pos;
 
+      bool damaged = false;
       for (int i = 0; i < 5; i++) {
+          if(damaged) break;
           //Player is colliding with an asteroid
           if (matrix[playerOne.x[i]][playerOne.y[i]] == 1) {
-
+          
               //Destroy asteroid that collided with player
               for (int j = 0; j < maxAsteroids; j++) {
+                if(damaged) break;
                   for (int k = 0; k < 5; k++) {
+                    if (damaged) break;
                       if ((objectList[j].x == playerOne.x[k] || objectList[j].x+1 == playerOne.x[k] || objectList[j].x-1 == playerOne.x[k]) && (objectList[j].y == playerOne.y[k] || objectList[j].y+1 == playerOne.y[k] || objectList[j].y-1 == playerOne.y[k])) {
                           //Found which asteroid the player has collided with or at least an asteroid
                           if ((millis() - objectList[j].startTime) > 5000 && (millis() - objectList[j].startTime) < 10000) {
                               //The asteroid found can damage the player
                               playerOne.lives--;
                               objectList[j].isActive = false;
+                              damaged = true;
 
                               //Make sure all reminents of the destroyed asteroid dont show
                               matrix[objectList[j].x][objectList[j].y] = 0;
@@ -344,6 +350,18 @@ void loop(){
                       }
                   }
               }
+              if(damaged){
+                for(int l = 0; l < 4; l++){
+                  tone(speaker,200);
+                  delay(30);
+                  tone(speaker,300);
+                  delay(30);
+                }
+                
+              }
+              noTone(speaker);
+
+              
 
               //Check for gameover
               if (playerOne.lives <= 0) {
@@ -369,8 +387,12 @@ void loop(){
   float endTimer = millis();
   while((endTimer + 1000) > millis()){
     PrintToScreen(dead);
+    tone(speaker,100);
+    delay(30);
+    tone(speaker,200);
+    delay(30);
   }
-
+  noTone(speaker);
 }
 
 void PrintToScreen (int printMatrix[8][8]) {
