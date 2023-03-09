@@ -29,7 +29,7 @@ int x_int_pos, y_int_pos;
 float x_speed, y_speed;
 int x_offset, y_offset, z_offset;
 float sens = 0.00005;
-float speedLim = 0.1;
+float speedLim = 0.3;
 //end player control variables
 
 //printScreen variables
@@ -47,6 +47,17 @@ int printable[8][8] = {
     {1,1,0,0,0,0,1,1},
     {0,1,1,1,1,1,1,0}
     };
+    
+int dead[8][8] = {
+    {1,1,0,0,0,0,1,1},
+    {1,1,1,0,0,1,1,1},
+    {0,1,1,0,1,1,1,0},
+    {0,0,1,1,1,0,0,0},
+    {0,0,0,1,1,1,0,0},
+    {0,1,1,1,0,1,1,0},
+    {1,1,1,0,0,1,1,1},
+    {1,1,0,0,0,0,1,1}
+    };
 
 //pins
 int button = 10;
@@ -57,7 +68,7 @@ class Asteroid {
     public:
         int x;
         int y;
-        int startTime;
+        unsigned long startTime;
 
         bool isBlinking;
         bool isActive;
@@ -99,7 +110,7 @@ void PrintMatrix (int matrix[8][8]) {
         for (int j = 0; j < 8; j++) {
             if (matrix[i][j] == 1) {
                 Serial.print("O ");
-            } else if (matrix[i][j] == 1) {
+            } else if (matrix[i][j] == 2) {
                 Serial.print("X ");
             }else {
                 Serial.print("  ");
@@ -150,15 +161,10 @@ void setup () {
     pinMode(grnRowList[i], OUTPUT);
   }
   //end print screen setup
-
-  
-  int spawnTimer = millis();
-  while(spawnTimer + 2000 < millis()){
-    PrintToScreen(printable);
-  }
 }
 
 void loop(){
+  
   int matrix[8][8];
   int maxAsteroids = 2;
   int isGameAlive = true;
@@ -167,7 +173,7 @@ void loop(){
   Player playerOne;
 
   int gameStart = millis();
-  srand(millis());
+  randomSeed(millis());
 
   for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 8; j++) {
@@ -176,8 +182,8 @@ void loop(){
   }
 
   //Initialize first asteroid
-  objectList[0].x = rand() % 6 + 1;;
-  objectList[0].y = rand() % 6 + 1;;
+  objectList[0].x = random() % 6 + 1;;
+  objectList[0].y = random() % 6 + 1;;
   objectList[0].startTime = millis();
   objectList[0].isActive = true;
 
@@ -194,25 +200,55 @@ void loop(){
 
       //Spawns asteroid every 5 seconds if there is an asteroid to spawn
       //Change max asteroids to enable for asteroids to spawn at one time
-      if ((millis() - spawnTimer) > 5) {
+      if ((millis() - spawnTimer) > 5000) {
           for (int i = 0; i < maxAsteroids; i++) {
-              if (objectList[i].isActive == false) {
-                  objectList[i].x = rand() % 6 + 1;
-                  objectList[i].y = rand() % 6 + 1;
+              if (objectList[i].isActive == false) {      
+                  objectList[i].x = random() % 6 + 1;
+                  objectList[i].y = random() % 6 + 1;
+                  
                   objectList[i].startTime = millis();
                   objectList[i].isActive = true;
-
+  
                   spawnTimer = millis();
                   break;
+                 
               }
           }
+      }
+
+      //check if asteroids are all inactive, reactivate one if so
+      bool deadlock = true;
+      Serial.print("time: ");
+      Serial.println(millis());
+      for (int i = 0; i < maxAsteroids; i++) {
+        Serial.print("object_");
+        Serial.print(i);
+        Serial.print(" active: ");
+        Serial.println(objectList[i].isActive);
+        Serial.print(", startTime: ");
+        Serial.println(objectList[i].startTime);
+        if(objectList[i].isActive = true){
+          deadlock = false;
+          break;
+        }
+      }
+      if(deadlock){
+        objectList[0].x = random() % 6 + 1;
+        objectList[0].y = random() % 6 + 1;
+        
+        objectList[0].startTime = millis();
+        objectList[0].isActive = true;
+
+        spawnTimer = millis();
+        Serial.println("DEADLOCK!");
+        
       }
 
       //Prints out the asteroids
       for (int i = 0; i < maxAsteroids; i++) {
 
           if (objectList[i].isActive == true) {
-              if ((millis() - objectList[i].startTime) < 10 && objectList[i].isBlinking == false) {
+              if ((millis() - objectList[i].startTime) < 10000 && objectList[i].isBlinking == false) {
                   //Tells print function to print the asteroids as 0
                   //IMPORTANT Just set to either 1 or 2 to work with our print screen function
                   matrix[objectList[i].x][objectList[i].y] = 1;
@@ -224,7 +260,7 @@ void loop(){
                   matrix[objectList[i].x][objectList[i].y-1] = 1;
                   matrix[objectList[i].x+1][objectList[i].y-1] = 1;
                   matrix[objectList[i].x+1][objectList[i].y] = 1;
-                  if ((millis() - objectList[i].startTime) < 5) {
+                  if ((millis() - objectList[i].startTime) < 5000) {
                       objectList[i].isBlinking = true;
                   }
               }
@@ -240,10 +276,12 @@ void loop(){
                   matrix[objectList[i].x+1][objectList[i].y] = 0;
                   objectList[i].isBlinking = false;
 
-                  if ((millis() - objectList[i].startTime) > 10) {
+                  if ((millis() - objectList[i].startTime) > 10000) {
                       objectList[i].isActive = false;
                   }
               }
+              
+              
           }
       }
 
@@ -277,14 +315,14 @@ void loop(){
 
       for (int i = 0; i < 5; i++) {
           //Player is colliding with an asteroid
-          if (matrix[playerOne.x[i]][playerOne.y[i]] == 5) {
+          if (matrix[playerOne.x[i]][playerOne.y[i]] == 1) {
 
               //Destroy asteroid that collided with player
               for (int j = 0; j < maxAsteroids; j++) {
                   for (int k = 0; k < 5; k++) {
                       if ((objectList[j].x == playerOne.x[k] || objectList[j].x+1 == playerOne.x[k] || objectList[j].x-1 == playerOne.x[k]) && (objectList[j].y == playerOne.y[k] || objectList[j].y+1 == playerOne.y[k] || objectList[j].y-1 == playerOne.y[k])) {
                           //Found which asteroid the player has collided with or at least an asteroid
-                          if ((millis() - objectList[j].startTime) > 5 && (millis() - objectList[j].startTime) < 10) {
+                          if ((millis() - objectList[j].startTime) > 5000 && (millis() - objectList[j].startTime) < 10000) {
                               //The asteroid found can damage the player
                               playerOne.lives--;
                               objectList[j].isActive = false;
@@ -314,7 +352,7 @@ void loop(){
           }
           //Tells print function to print the player as +
           //IMPORTANT Just set to either 1 or 2 to work with our print screen function
-          matrix[playerOne.x[i]][playerOne.y[i]] = 1;
+          matrix[playerOne.x[i]][playerOne.y[i]] = 2;
       }
 
       Serial.println(playerOne.lives);
@@ -328,6 +366,10 @@ void loop(){
   Serial.print("Final Score: ");
   Serial.println((millis() - gameStart));
   Serial.println("GAME OVER");
+  float endTimer = millis();
+  while((endTimer + 1000) > millis()){
+    PrintToScreen(dead);
+  }
 
 }
 
@@ -344,8 +386,12 @@ void PrintToScreen (int printMatrix[8][8]) {
                 digitalWrite(columnList[j], HIGH);
             }
             else if (printMatrix[i][j] == GRN) {
-                digitalWrite(redRowList[i], HIGH);
-                digitalWrite(grnRowList[i], LOW);
+//                digitalWrite(redRowList[i], HIGH);
+//                digitalWrite(grnRowList[i], LOW);
+//                digitalWrite(columnList[j], HIGH);
+              //pretend this is green
+                digitalWrite(grnRowList[i], HIGH);
+                digitalWrite(redRowList[i], LOW);
                 digitalWrite(columnList[j], HIGH);
             }
             else {
@@ -355,7 +401,7 @@ void PrintToScreen (int printMatrix[8][8]) {
 //            digitalWrite(columnList[j], LOW);
           
         }
-        delay(100/30);
+        delay(100/45);
         //Sets back to values where nothing should light up when a row value is changed;
         digitalWrite(redRowList[i], HIGH);
         digitalWrite(grnRowList[i], HIGH);
