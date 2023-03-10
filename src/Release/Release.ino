@@ -423,7 +423,7 @@ void PrintToScreen (int printMatrix[8][8]) {
 //            digitalWrite(columnList[j], LOW);
           
         }
-        delay(100/45);
+        delay(100/60);
         //Sets back to values where nothing should light up when a row value is changed;
         digitalWrite(redRowList[i], HIGH);
         digitalWrite(grnRowList[i], HIGH);
