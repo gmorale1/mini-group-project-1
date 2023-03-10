@@ -187,7 +187,7 @@ void loop(){
   objectList[0].startTime = millis();
   objectList[0].isActive = true;
 
-  int spawnTimer = millis();
+  unsigned long spawnTimer = millis();
 
   while(isGameAlive) {
       PrintMatrix(matrix);
